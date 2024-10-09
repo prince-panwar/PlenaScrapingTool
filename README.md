@@ -45,7 +45,7 @@ npm run start
 This will first start the backend, followed by the frontend.
 
 ### 5. Log in with Your Telegram Account
-When prompted, enter the same Telegram phone number for which you obtained the API credentials.
+When prompted, enter the same Telegram phone number **with country code** for which you obtained the API credentials.
 You will receive a verification code on your Telegram app. Enter this code when prompted.
 ### 6. Scrape Coin Data
 1. Once logged in, navigate to the web interface.
