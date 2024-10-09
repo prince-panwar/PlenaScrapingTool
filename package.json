@@ -3,7 +3,8 @@
     "scripts": {
       "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
       "start-backend": "cd scrapingbackend && npm start",
-      "start-frontend": "cd frontend && npm run dev"
+      "start-frontend": "cd frontend && npm run dev",
+      "install": "cd scrapingbackend && npm install && cd ../frontend && npm install"
     },
   
   
