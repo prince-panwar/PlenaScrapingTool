@@ -27,6 +27,7 @@ Before setting up the project, ensure you have the following:
     ```env
     TELEGRAM_API_ID=your_api_id
     TELEGRAM_API_HASH=your_api_hash
+    TELEGRAM_SESSION= leave-this-empty
   
     ```
 
