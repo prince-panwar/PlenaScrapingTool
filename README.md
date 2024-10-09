@@ -1,6 +1,6 @@
 # Crypto Coin Scraping Tool
 
-This project is a web-based tool for scraping cryptocurrency data from CoinMarketCap. It allows users to input a URL for a specific coin's page and automatically scrapes data such as coin name, price, and social media links. The tool also integrates with Telegram, allowing users to log in and potentially fetch additional data such as Telegram group admins.
+This project is a web-based tool for scraping cryptocurrency data from CoinMarketCap. It allows users to input a URL for a specific coin's page on coinmarketcap and automatically scrapes data such as coin name, price, and social media links. The tool also integrates with Telegram, allowing users to log in and potentially fetch additional data such as Telegram group admins.
 
 ## Features
 - Scrape data from CoinMarketCap coin pages.
