@@ -22,7 +22,7 @@ Before setting up the project, ensure you have the following:
 
 ### 2. Configure Environment Variables
 1. Create a `.env` file inside the `scrapingbackend` directory.
-2. Add the following environment variables to the `.env` file, replacing the placeholders with your actual API ID, API Hash, and Telegram phone number:
+2. Add the following environment variables to the `.env` file, replacing the placeholders with your actual API ID, API Hash and leave the session variable empty.
 
     ```env
     TELEGRAM_API_ID=your_api_id
