@@ -10,7 +10,7 @@ export async function POST(req) {
 
     // Send POST request to your backend, passing the code, phoneCodeHash, and phoneNumber
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/complete-login`,
+      `http://localhost:5000/complete-login`,
       { code, phoneCodeHash, phoneNumber },  // Pass code, phoneCodeHash, and phoneNumber in the body
       {
         headers: {

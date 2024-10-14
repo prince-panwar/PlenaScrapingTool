@@ -6,7 +6,7 @@ export async function GET(req) {
 
 try {
     // Fetch the CSV file from the backend
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/download_csv`,);
+    const response = await axios.get(`http://localhost:5000/download_csv`,);
 
     // Return the CSV content as a plain text response
     return new NextResponse(response.data, {

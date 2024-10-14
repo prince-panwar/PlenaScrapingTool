@@ -7,7 +7,7 @@ export async function GET(req) {
 
     // Send the GET request to your backend API, passing query parameters and cookies
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/scrape`,
+      `http://localhost:5000/scrape`,
       {
         params: queryParams, // Pass query parameters as an object
         headers: {

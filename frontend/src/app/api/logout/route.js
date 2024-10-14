@@ -4,7 +4,7 @@ export async function POST(req) {
   try {
     // Send the POST request to the backend logout route
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/logout`,
+      `http://localhost:5000/logout`,
       {},
       {
         headers: {
