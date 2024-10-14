@@ -14,6 +14,7 @@ const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 
+
 const app = express();
 const port = 5000;
 
@@ -253,7 +254,10 @@ app.get('/scrape', async (req, res) => {
       await client.connect();
     }
 
-    const coinData = await scrapeCoinData(url, client);
+    const coinData = await scrapeCoinData(url);
+
+    // Log coinData to verify its structure
+    console.log('Scraped Coin Data:', coinData);
 
     // Define CSV file path
     const csvFilePath = 'coin_data.csv'; // Use a fixed file name
@@ -292,7 +296,6 @@ app.get('/scrape', async (req, res) => {
 async function scrapeCoinData(url) {
   try {
     const { data } = await axios.get(url);
-
     const $ = cheerio.load(data);
 
     // Initialize variables
@@ -316,7 +319,7 @@ async function scrapeCoinData(url) {
     }
 
     // Scrape Social Media Links
-    $('a[rel="nofollow noopener"]').each((index, element) => {
+    $('a[rel="nofollow noopener noreferrer"]').each((index, element) => {
       const link = $(element).attr('href');
       if (link.includes('twitter.com')) {
         twitterLink = link;
@@ -330,12 +333,20 @@ async function scrapeCoinData(url) {
     // If Telegram link is available, fetch admins
     if (telegramLink !== 'Not Available') {
       try {
-        // Extract the group username from the Telegram link
-        let groupUsername = telegramLink
-          .replace('https://t.me/', '')
-          .replace('https://telegram.me/', '')
-          .replace('@', '')
-          .split('/')[0];
+        // Normalize the Telegram link
+        let normalizedLink = telegramLink;
+        if (telegramLink.startsWith('//')) {
+          normalizedLink = 'https:' + telegramLink;
+        } else if (!telegramLink.startsWith('http')) {
+          normalizedLink = 'https://' + telegramLink;
+        }
+
+        // Parse the URL to extract the group username
+        const urlObj = new URL(normalizedLink);
+        let groupUsername = urlObj.pathname.replace('/', '').replace('@', '').split('/')[0];
+
+        // Log the groupUsername for debugging
+        console.log('Group Username:', groupUsername);
 
         // Fetch the group entity
         const result = await client.invoke(
@@ -356,11 +367,18 @@ async function scrapeCoinData(url) {
         // Combine admin usernames into a comma-separated string
         telegramAdmins = adminUsernames.join(', ');
       } catch (error) {
-        if (error instanceof errors.ChatAdminRequiredError) {
-          console.error('Error fetching Telegram admins: You need to be an admin to view other admins in this group.');
-          telegramAdmins = 'You need to be an admin to view other admins in this group.';
+        console.error('Error fetching Telegram admins:', error.message);
+
+        // Handle specific errors
+        if (error.message.includes('USER_PRIVACY_RESTRICTED')) {
+          telegramAdmins = 'Unable to fetch admins due to privacy settings.';
+        } else if (error.message.includes('CHANNEL_PRIVATE')) {
+          telegramAdmins = 'This is a private group; cannot fetch admins.';
+        } else if (error.message.includes('AUTH_KEY_UNREGISTERED')) {
+          telegramAdmins = 'Invalid Telegram client authentication.';
+        } else if (error.message.includes('USERNAME_NOT_OCCUPIED')) {
+          telegramAdmins = 'The Telegram group does not exist.';
         } else {
-          console.error('Error fetching Telegram admins:', error.message);
           telegramAdmins = `Error fetching admins: ${error.message}`;
         }
       }
@@ -379,6 +397,7 @@ async function scrapeCoinData(url) {
     throw error;
   }
 }
+
 
 // Endpoint to download the CSV file
 app.get('/download_csv', (req, res) => {
