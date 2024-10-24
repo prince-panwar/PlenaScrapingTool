@@ -38,8 +38,8 @@ export default function ScrapeDataComponent() {
 
     try {
       setMessage('Scraping data...');
-      const response = await axios.post('/api/scrape', { url: coinUrl });
-      if (response.data?.success) {
+      const response = await axios.get(`/api/scrape?url=${encodeURIComponent(coinUrl)}`);
+      if (response.status==200) {
         setMessage('Data scraped successfully!');
         fetchData(); // Refresh the data display
       } else {

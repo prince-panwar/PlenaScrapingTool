@@ -16,7 +16,7 @@ const cookieParser = require('cookie-parser');
 const { createClient } = require('@supabase/supabase-js');
 const { Parser } = require('json2csv');
 const app = express();
-const port = 5000;
+const port = process.env.PORT|| 5000;
 
 app.use(cookieParser());
 app.use(cors({
@@ -48,8 +48,95 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Use a persistent session
-let sessionString = process.env.TELEGRAM_SESSION || '';
+let sessionString =  '';
 let stringSession = new StringSession(sessionString);
+
+
+
+async function getSession(req, res) {
+  try {
+    // Fetch all data from Supabase, ordered by most recent first
+    const { data, error } = await supabase
+      .from('session')
+      .select('sessionKey')
+      .limit(1); // Limit to 1 if you only need the most recent session
+
+    if (error) {
+      console.error('Error fetching data from Supabase:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch data'
+      });
+    }
+
+    // Check if data is empty before accessing it
+    if (data.length === 0) {
+      console.log("No session found");
+    }
+     
+    //console.log(data[0].sessionKey)
+    // Extract the session string from the first item in the data array
+     sessionString = data[0].sessionKey;
+
+ 
+
+  } catch (e) {
+    console.log(e);
+   
+  }
+}
+async function storeSessionKey(sessionKey, req, res) {
+  try {
+    // Delete existing session keys
+    const { error: deleteError } = await supabase
+      .from('session')
+      .delete()
+      .neq('sessionKey', null); // This deletes all existing session keys
+
+    if (deleteError) {
+      console.error('Error deleting existing session keys:', deleteError);
+     
+    }
+
+    // Insert new session key
+    const { error: insertError } = await supabase
+      .from('session')
+      .insert([{ sessionKey }]);
+
+    if (insertError) {
+      console.error('Error inserting new session key:', insertError);
+     
+    }
+
+   
+
+  } catch (e) {
+    console.log(e);
+  }
+}
+async function deleteAllSessionKeys(req, res) {
+  try {
+    // Delete all session keys
+    const { error } = await supabase
+      .from('session')
+      .delete()
+      .neq('sessionKey', null); // This deletes all existing session keys
+
+    if (error) {
+      console.error('Error deleting session keys:', error);
+      
+    }
+
+   
+
+  } catch (e) {
+    console.log(e);
+  
+  }
+}
+
+
+
 
 // Initialize the Telegram client
 let client = new TelegramClient(stringSession, apiId, apiHash, {
@@ -59,6 +146,7 @@ let client = new TelegramClient(stringSession, apiId, apiHash, {
 
 // Start the client if session exists
 (async () => {
+ getSession();
   if (sessionString) {
     try {
       await client.connect();
@@ -138,12 +226,9 @@ app.post('/complete-login', async (req, res) => {
 
       // Save the session string
       const session = client.session.save();
-
-      // Store the session string securely in .env file
-      let envConfig = fs.readFileSync('.env', 'utf8');
-      envConfig = envConfig.replace(/TELEGRAM_SESSION=.*/g, `TELEGRAM_SESSION=${session}`);
-      fs.writeFileSync('.env', envConfig);
-
+      
+      storeSessionKey(session);
+      
       // Update the session variables
       sessionString = session;
       stringSession = new StringSession(sessionString);
@@ -179,10 +264,7 @@ app.post('/submit-password', async (req, res) => {
     // Save the session string
     const session = client.session.save();
 
-    // Store the session string securely
-    let envConfig = fs.readFileSync('.env', 'utf8');
-    envConfig = envConfig.replace(/TELEGRAM_SESSION=.*/g, `TELEGRAM_SESSION=${session}`);
-    fs.writeFileSync('.env', envConfig);
+    storeSessionKey(session);
 
     // Update the session variables
     sessionString = session;
@@ -213,8 +295,7 @@ app.post('/logout', async (req, res) => {
     console.log(result);
     console.log('Logged out successfully');
     
-    // Clear the session data
-    clearSessionData();
+    deleteAllSessionKeys();
 
     // Destroy the session
     req.session.destroy((err) => {
@@ -230,17 +311,7 @@ app.post('/logout', async (req, res) => {
   }
 });
 
-function clearSessionData() {
-  // Clear the session string in the .env file
-  let envConfig = fs.readFileSync('.env', 'utf8');
-  envConfig = envConfig.replace(/TELEGRAM_SESSION=.*/g, 'TELEGRAM_SESSION=');
-  fs.writeFileSync('.env', envConfig);
 
-  // Also clear the session variable in process.env and other variables
-  process.env.TELEGRAM_SESSION = '';
-  sessionString = '';
-  stringSession = new StringSession(sessionString);
-}
 
 function cleanCoinData(coinData) {
   const cleaned = { ...coinData };
