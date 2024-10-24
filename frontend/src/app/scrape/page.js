@@ -68,7 +68,7 @@ export default function ScrapeDataComponent() {
   const downloadCSV = async () => {
     try {
       // Make GET request to download endpoint
-      const response = await axios.get('http://localhost:5000/downloadCSV', {
+      const response = await axios.get('https://plenascrapingtool.onrender.com/downloadCSV', {
         responseType: 'blob' // Important for file download
       });
   

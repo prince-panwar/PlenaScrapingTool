@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export async function GET(req) {
   try {
     // Fetch the data from your backend
-    const response = await axios.get('http://localhost:5000/getData', {
+    const response = await axios.get('https://plenascrapingtool.onrender.com/getData', {
       headers: {
         'Accept': 'application/json'
       }

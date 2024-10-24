@@ -4,7 +4,7 @@ export async function POST(req) {
   try {
     // Send the POST request to the backend logout route
     const response = await axios.post(
-      `http://localhost:5000/logout`,
+      `https://plenascrapingtool.onrender.com/logout`,
       {},
       {
         headers: {
