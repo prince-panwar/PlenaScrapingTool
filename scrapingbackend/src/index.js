@@ -13,8 +13,8 @@ const path = require('path');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
-
-
+const { createClient } = require('@supabase/supabase-js');
+const { Parser } = require('json2csv');
 const app = express();
 const port = 5000;
 
@@ -27,7 +27,10 @@ app.use(cors({
 const apiId = parseInt(process.env.TELEGRAM_API_ID);
 const apiHash = process.env.TELEGRAM_API_HASH;
 
+const supabase_url = process.env.SUPABASE_URL;
+const supabase_key = process.env.SUPABASE_KEY;
 
+const supabase = createClient(supabase_url,supabase_key);
 // Session middleware
 app.use(express.json());
 app.use(session({
@@ -239,6 +242,29 @@ function clearSessionData() {
   stringSession = new StringSession(sessionString);
 }
 
+function cleanCoinData(coinData) {
+  const cleaned = { ...coinData };
+
+  // Convert telegramAdmins string to array if it's a string
+  if (typeof cleaned.telegramAdmins === 'string' && 
+      cleaned.telegramAdmins !== 'Not Available' && 
+      !cleaned.telegramAdmins.startsWith('Error') && 
+      !cleaned.telegramAdmins.startsWith('Unable') && 
+      !cleaned.telegramAdmins.startsWith('This is a private group')) {
+    
+    cleaned.telegramAdmins = cleaned.telegramAdmins
+      .split(',')
+      .map(admin => admin.trim())
+      .filter(admin => admin !== 'No Username' && admin !== '');
+  } else if (cleaned.telegramAdmins === 'Not Available' || 
+             cleaned.telegramAdmins.startsWith('Error') || 
+             cleaned.telegramAdmins.startsWith('Unable') || 
+             cleaned.telegramAdmins.startsWith('This is a private group')) {
+    cleaned.telegramAdmins = [];
+  }
+
+  return cleaned;
+}
 
 
 // Scrape endpoint
@@ -259,33 +285,25 @@ app.get('/scrape', async (req, res) => {
     // Log coinData to verify its structure
     console.log('Scraped Coin Data:', coinData);
 
-    // Define CSV file path
-    const csvFilePath = 'coin_data.csv'; // Use a fixed file name
+    
 
-    // Check if the CSV file exists
-    const fileExists = fs.existsSync(csvFilePath);
+   const cleanData =  cleanCoinData(coinData);
+   
 
-    // Set up the CSV writer
-    const csvWriter = createCsvWriter({
-      path: csvFilePath,
-      header: [
-        { id: 'coinName', title: 'Coin Name' },
-        { id: 'coinPrice', title: 'Coin Price' },
-        { id: 'twitterLink', title: 'Twitter' },
-        { id: 'discordLink', title: 'Discord' },
-        { id: 'telegramLink', title: 'Telegram' },
-        { id: 'telegramAdmins', title: 'Telegram Admins' },
-      ],
-      append: fileExists, // Append if file exists
-    });
+    // Attempt to insert data
+    const { data, error } = await supabase
+      .from('scrape_data') // Replace with your actual table name
+      .insert([cleanData]);
 
-    // Write data to the CSV file
-    await csvWriter.writeRecords([coinData]);
+    if (error) {
+      console.error('Error uploading to Supabase:', error.message);
+      return res.status(500).send('Error uploading data to Supabase');
+    }
 
     // Send the response with a download link
     res.json({
       message: 'Coin data has been appended to CSV.',
-      download_url: `/download_csv?file=${encodeURIComponent(csvFilePath)}`,
+     
     });
   } catch (error) {
     console.error('Error:', error);
@@ -400,20 +418,92 @@ async function scrapeCoinData(url) {
 
 
 // Endpoint to download the CSV file
-app.get('/download_csv', (req, res) => {
-  
- 
-  const filePath = 'coin_data.csv'; 
+app.get('/getData', async (req, res) => {
+  try {
+    // Fetch all data from Supabase, ordered by most recent first
+    const { data, error } = await supabase
+      .from('scrape_data')
+      .select(`
+        coinName,
+        coinPrice,
+        twitterLink,
+        discordLink,
+        telegramLink,
+        telegramAdmins
+      `)
+      .order('created_at', { ascending: false });
 
-  if (fs.existsSync(filePath)) {
-    res.download(filePath, (err) => {
-      if (err) {
-        console.error('Error downloading file:', err);
-        res.status(500).send('Error occurred while downloading the file');
-      }
+    if (error) {
+      console.error('Error fetching data from Supabase:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch data'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: data
     });
-  } else {
-    res.status(404).send('File not found');
+
+  } catch (error) {
+    console.error('Error in fetch endpoint:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+});
+app.get('/downloadCSV', async (req, res) => {
+  try {
+    // Fetch data from Supabase
+    const { data, error } = await supabase
+      .from('scrape_data')
+      .select(`
+        coinName,
+        coinPrice,
+        twitterLink,
+        discordLink,
+        telegramLink,
+        telegramAdmins
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching data from Supabase:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch data'
+      });
+    }
+
+    // Define fields for CSV
+    const fields = [
+      'coinName',
+      'coinPrice',
+      'twitterLink',
+      'discordLink',
+      'telegramLink',
+      'telegramAdmins'
+    ];
+
+    // Create CSV parser
+    const json2csvParser = new Parser({ fields });
+    const csv = json2csvParser.parse(data);
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=scrape_data.csv');
+
+    // Send CSV file
+    res.status(200).send(csv);
+
+  } catch (error) {
+    console.error('Error in CSV download:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to generate CSV'
+    });
   }
 });
 
