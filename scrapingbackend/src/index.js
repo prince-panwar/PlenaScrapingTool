@@ -20,7 +20,7 @@ const port = process.env.PORT|| 5000;
 
 app.use(cookieParser());
 app.use(cors({
-  origin: 'https://codespaces-blank-self.vercel.app/', // Your frontend URL
+  origin: 'https://codespaces-blank-self.vercel.app', // Your frontend URL
   credentials: true // Allow cookies to be sent
 }));
 
