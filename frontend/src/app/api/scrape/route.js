@@ -7,7 +7,7 @@ export async function GET(req) {
 
     // Send the GET request to your backend API, passing query parameters and cookies
     const response = await axios.get(
-      `https://plenascrapingtool.onrender.com/scrape`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/scrape`,
       {
         params: queryParams, // Pass query parameters as an object
         headers: {

@@ -9,7 +9,7 @@ export async function POST(req) {
     const { phoneNumber } = body;
     // Make a request to the backend service
     const response = await axios.post(
-      `https://plenascrapingtool.onrender.com/start-login`,{phoneNumber} // Backend URL
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/start-login`,{phoneNumber} // Backend URL
      
     );
 
