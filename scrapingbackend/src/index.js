@@ -412,7 +412,7 @@ async function scrapeCoinData(url) {
       const link = $(element).attr('href');
       if (link.includes('twitter.com')) {
         twitterLink = link;
-      } else if (link.includes('discord.com')) {
+      } else if (link.includes('discord')) {
         discordLink = link;
       } else if (link.includes('t.me') || link.includes('telegram.me')) {
         telegramLink = link;
