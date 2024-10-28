@@ -2,13 +2,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Layout from '../components/Layout';
+import { useRouter } from 'next/navigation';
 export default function ScrapeDataComponent() {
   const [coinUrl, setCoinUrl] = useState('');
   const [data, setData] = useState(null);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const router = useRouter();
+  
   const fetchData = async () => {
     try {
       setIsLoading(true);
@@ -29,6 +31,20 @@ export default function ScrapeDataComponent() {
   useEffect(() => {
     fetchData();
   }, []);
+  useEffect(() => {
+    const fetchConnectionStatus = async () => {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Connection-status`);
+        if(response.data.isConnected==false){
+          router.push('/'); 
+        }
+      } catch (error) {
+        console.error('Error fetching connection status:', error);
+      }
+    };
+  
+    fetchConnectionStatus();
+  }, []); 
 
   const scrapeData = async () => {
     if (!coinUrl) {

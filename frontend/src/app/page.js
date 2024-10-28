@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countdown, setCountdown] = useState(0);
   const router = useRouter();
+  
 
   const startLogin = async () => {
     if (countdown > 0) return; // Prevent resending if countdown is active
@@ -26,6 +27,21 @@ export default function LoginPage() {
       setMessage(errorMessage);
     }
   };
+  useEffect(() => {
+    const fetchConnectionStatus = async () => {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Connection-status`);
+        if(response.data.isConnected==true){
+          router.push('/scrape'); 
+        }
+      } catch (error) {
+        console.error('Error fetching connection status:', error);
+      }
+    };
+  
+    fetchConnectionStatus();
+  }, []); 
+  
 
   const submitCode = async () => {
     try {

@@ -72,12 +72,13 @@ async function getSession(req, res) {
     // Check if data is empty before accessing it
     if (data.length === 0) {
       console.log("No session found");
+      return false;
     }
      
     //console.log(data[0].sessionKey)
     // Extract the session string from the first item in the data array
      sessionString = data[0].sessionKey;
-
+     return true;
  
 
   } catch (e) {
@@ -161,8 +162,18 @@ let client = new TelegramClient(stringSession, apiId, apiHash, {
   }
 })();
 
-// Endpoint to start login
 
+app.get('/Connection-status', async (req, res) => {
+  try {
+    const isConnected = await getSession();
+    res.status(200).json({ isConnected });
+  } catch (e) {
+    console.error('Error checking connection status:', e);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// Endpoint to start login
 app.post('/start-login', async (req, res) => {
   try {
     // Ensure the client is connected
