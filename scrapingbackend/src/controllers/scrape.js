@@ -8,6 +8,8 @@ dotenv.config();
 
 const require = createRequire(import.meta.url);
 const cheerio = require('cheerio');
+
+
 export const scrape =async (req, res) => {
     const url = req.query.url;
     if (!url) {
@@ -16,17 +18,10 @@ export const scrape =async (req, res) => {
   
     try {
     
-      
       const coinData = await scrapeCoinData(url);
-  
       // Log coinData to verify its structure
       console.log('Scraped Coin Data:', coinData);
-  
-      
-  
-     const cleanData =  cleanCoinData(coinData);
-     
-  
+      const cleanData =  cleanCoinData(coinData); 
       // Attempt to insert data
       const { data, error } = await supabase
         .from('scrape_data') // Replace with your actual table name
@@ -59,6 +54,7 @@ export const scrape =async (req, res) => {
       let discordLink = 'Not Available';
       let telegramLink = 'Not Available';
       let telegramAdmins = 'Not Available';
+      let coinMarketCapLink = url;
   
       // Scrape Coin Name
       const coinNameElement = $('span[data-role="coin-name"]');
@@ -145,6 +141,7 @@ export const scrape =async (req, res) => {
         discordLink,
         telegramLink,
         telegramAdmins,
+        coinMarketCapLink,
       };
     } catch (error) {
       console.error('Error scraping data:', error.message);
@@ -164,7 +161,8 @@ export const getData=  async (req, res) => {
           twitterLink,
           discordLink,
           telegramLink,
-          telegramAdmins
+          telegramAdmins,
+          coinMarketCapLink
         `)
         .order('created_at', { ascending: false });
   
@@ -203,7 +201,8 @@ export const getData=  async (req, res) => {
           twitterLink,
           discordLink,
           telegramLink,
-          telegramAdmins
+          telegramAdmins,
+          coinMarketCapLink
         `)
         .order('created_at', { ascending: false });
   
@@ -222,7 +221,8 @@ export const getData=  async (req, res) => {
         'twitterLink',
         'discordLink',
         'telegramLink',
-        'telegramAdmins'
+        'telegramAdmins',
+        'coinMarketCapLink',
       ];
   
       // Create CSV parser
