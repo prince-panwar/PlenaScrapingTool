@@ -188,7 +188,35 @@ export const getData=  async (req, res) => {
     }
   }
 
-
+  export const deleteAllData = async (req, res) => {
+    try {
+      // Delete all rows from scrape_data table in Supabase
+      const { error } = await supabase
+        .from('scrape_data')
+        .delete()
+        .neq('id', 0); // A workaround to target all rows
+  
+      if (error) {
+        console.error('Error deleting data from Supabase:', error);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to delete data',
+        });
+      }
+  
+      return res.status(200).json({
+        success: true,
+        message: 'All data deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error in delete endpoint:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+      });
+    }
+  };
+  
 
  export const downloadData= async (req, res) => {
     try {
